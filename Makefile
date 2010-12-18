@@ -47,6 +47,7 @@ OBJS +=	arch/omap4/serial.o
 OBJS += arch/omap4/clock.o
 OBJS += arch/omap4/sdram.o
 OBJS += arch/omap4/gpmc.o
+OBJS += arch/omap4/rom_usb.o
 OBJS += libc/printf.o 
 OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
 OBJS += aboot.o 

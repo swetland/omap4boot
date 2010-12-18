@@ -26,58 +26,38 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
-#include <omap4/mux.h>
-#include <omap4/hw.h>
-#include <omap4/rom_usb.h>
+#ifndef _ROM_USB_H_
+#define _ROM_USB_H_
 
-static unsigned MSG = 0xaabbccdd;
+struct rom_handle {
+	void *set_to_null;
+	void (*callback)(struct rom_handle *rh);
+	void *data;
+	u32 length;
+	u16 *options;
+	u32 xfer_mode;
+	u32 device_type;
+	volatile u32 status;
+	u16 hs_toc_mask;
+	u16 gp_toc_mask;
+};
 
-struct usb usb;
+struct usb {
+	struct rom_handle dread;
+	struct rom_handle dwrite;
+	struct rom_driver *io;
+};
 
-#define DOWNLOAD_ADDR 0x82000000
+int usb_open(struct usb *usb);
+void usb_close(struct usb *usb);
 
-void aboot(void)
-{
-	unsigned n;
-	unsigned len;
+void usb_queue_read(struct usb *usb, void *data, unsigned len);
+int usb_wait_read(struct usb *usb);
 
-	mux_config();
-	sdelay(100);
+void usb_queue_write(struct usb *usb, void *data, unsigned len);
+int usb_wait_write(struct usb *usb);
 
-	scale_vcores();
+int usb_read(struct usb *usb, void *data, unsigned len);
+int usb_write(struct usb *usb, void *data, unsigned len);
 
-	prcm_init();
-  	ddr_init();
-	gpmc_init();
-
-	serial_init();
-	serial_puts("\n[ aboot second-stage loader ]\n\n");
-
-	if (usb_open(&usb))
-		goto fail;
-
-	usb_queue_read(&usb, &len, 4);
-	usb_write(&usb, &MSG, 4);
-	n = usb_wait_read(&usb);
-	if (n)
-		goto fail;
-
-	if (usb_read(&usb, (void*) DOWNLOAD_ADDR, len))
-		goto fail;
-
-	usb_close(&usb);
-	serial_puts("booting....\n");
-
-	{
-		void (*entry)(unsigned, unsigned, unsigned) = (void*) DOWNLOAD_ADDR;
-		entry(0, 2791, 0x80000100);
-		for (;;);
-	}
-
-fail:
-	serial_puts("io error\n");
-	for (;;) ;
-}
-
+#endif
