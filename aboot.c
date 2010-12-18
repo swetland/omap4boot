@@ -205,6 +205,7 @@ void aboot(void)
 
 	prcm_init();
   	ddr_init();
+	gpmc_init();
 
 	serial_init();
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
