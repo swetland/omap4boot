@@ -1,0 +1,29 @@
+USB downloader and USB second stage bootloader for OMAP44xx
+===========================================================
+
+aboot.bin
+---------
+
+aboot.bin is a designed to be a second stage USB bootloader (what TI
+calls x-loader) for the USB peripheral boot mode of OMAP44xx.
+
+Currently it's somewhat pandaboard-centric, but that should be
+easy enough to clean up -- it shouldn't touch any gpiomux config
+except (maybe) for the UART.
+
+All it does is send a u32 message (0xaabbccdd) back over the USB link, 
+then reads a u32 size from the host.  Then it downloads size bytes
+from the host to 0x82000000 and jumps to that address.
+
+
+usbboot
+-------
+
+usage: usbboot <2ndstage> [ <image> ]
+
+- usbboot will poll every 250ms until it locates an OMAP device 
+  (VID 0451, PID d00f)
+- it then will send the 2ndstage binary to the device 
+- if an image was also provided, it will wait for the 2ndstage to
+  send the go-ahead response (0xaabbccdd) and then send that image
+
