@@ -52,50 +52,22 @@ int usb_boot(usb_handle *usb,
 	     void *data2, unsigned sz2)
 {
 	uint32_t msg_boot = 0xF0030002;
-	uint32_t msg_getid = 0xF0030003;
 	uint32_t msg_size = sz;
-	unsigned char asic_id[1 + 7 + 4 + 23 + 35 + 11];
-	tocentry TOC[32];
-	unsigned test = 0xeeeeeeee;
-	int n = 0;
 
-#if USE_TOC
-	TOC[0].offset = 0x200; //0x40;
-	TOC[0].length = sz;
-	TOC[0].flags = 0;
-	TOC[0].align = 0;
-	TOC[0].spare = 0;
-	memcpy(TOC[0].name, "2ND", 3);
-	memset(TOC + 1, 0xff, 32);
-	msg_size += sizeof(TOC);
-#endif
-
-#if 0
-	fprintf(stderr,"get asic id?\n");
-	usb_write(usb, &msg_getid, sizeof(msg_getid));
-	usb_read(usb, asic_id, sizeof(asic_id));
-	fprintf(stderr,"%02x %02x %02x %02x %02x %02x %02x %02x \n",
-		asic_id[0], asic_id[1], asic_id[2], asic_id[3], 
-		asic_id[4], asic_id[5], asic_id[6], asic_id[7]);
-	fprintf(stderr,"OMAP%02x%02x\n", asic_id[4], asic_id[5]);
-#endif
-
-	fprintf(stderr,"boot!\n");
+	fprintf(stderr,"sending 2ndstage to target...\n");
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
-	fprintf(stderr,"sz %d\n", msg_size);
 	usb_write(usb, &msg_size, sizeof(msg_size));
-#if USE_TOC
-	usb_write(usb, TOC, sizeof(TOC));
-#endif
 	usb_write(usb, data, sz);
 
 	if (data2) {
+		fprintf(stderr,"waiting for 2ndstage response...\n");
 		usb_read(usb, &msg_size, sizeof(msg_size));
 		if (msg_size != 0xaabbccdd) {
-			fprintf(stderr,"unexpected response\n");
+			fprintf(stderr,"unexpected 2ndstage response\n");
 			return -1;
 		}
 		msg_size = sz2;
+		fprintf(stderr,"sending image to target...\n");
 		usb_write(usb, &msg_size, sizeof(msg_size));
 		usb_write(usb, data2, sz2);
 	}
@@ -148,9 +120,12 @@ int main(int argc, char **argv)
 	void *data, *data2;
 	unsigned sz, sz2;
 	usb_handle *usb;
+	int once = 1;
 	
-	if (argc < 2)
+	if (argc < 2) {
+		fprintf(stderr,"usage: usbboot <2ndstage> [ <image> ]\n");
 		return 0;
+	}
 
 	data = load_file(argv[1], &sz);
 	if (data == 0) {
@@ -173,6 +148,10 @@ int main(int argc, char **argv)
 		usb = usb_open(match_omap4_bootloader);
 		if (usb)
 			return usb_boot(usb, data, sz, data2, sz2);
+		if (once) {
+			once = 0;
+			fprintf(stderr,"waiting for OMAP44xx device...\n");
+		}
 		usleep(250);
 	}
 	
