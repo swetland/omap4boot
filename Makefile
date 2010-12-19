@@ -25,22 +25,24 @@
 ## OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ## SUCH DAMAGE.
 
+-include local.mk
 
-TEXT_BASE := 0x40300000
+TEXT_BASE ?= 0x40300000
 
-#TC := /work/atc/bin/arm-linux-androideabi-
-TC := arm-eabi-
+TOOLCHAIN ?= arm-eabi-
 
-CC := $(TC)gcc
-LD := $(TC)ld
-OBJCOPY := $(TC)objcopy
-OBJDUMP := $(TC)objdump
+TARGET_CC := $(TOOLCHAIN)gcc
+TARGET_LD := $(TOOLCHAIN)ld
+TARGET_OBJCOPY := $(TOOLCHAIN)objcopy
+TARGET_OBJDUMP := $(TOOLCHAIN)objdump
 
-CFLAGS := -g -Os  -Wall
-CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
-CFLAGS += -I. -Iinclude
+TARGET_CFLAGS := -g -Os  -Wall
+TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
+TARGET_CFLAGS += -I. -Iinclude
 
-LIBGCC := $(shell $(TC)gcc $(CFLAGS) -print-libgcc-file-name)
+HOST_CFLAGS := -g -O2 -Wall
+
+LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
 OBJS := arch/omap4/start.o
 OBJS +=	arch/omap4/serial.o 
@@ -50,37 +52,72 @@ OBJS += arch/omap4/gpmc.o
 OBJS += arch/omap4/rom_usb.o
 OBJS += libc/printf.o 
 OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
+OBJS += libc/raise.o
 OBJS += aboot.o 
 OBJS += misc.o
 
 LIBS := $(LIBGCC)
 
-all: aboot.bin aboot.lst aboot.ift usbboot
+OUT := out
 
-usbboot: tools/usbboot.c tools/usb_linux.c
-	gcc -O2 -Wall -Itools -o usbboot tools/usbboot.c tools/usb_linux.c
+all: $(OUT)/aboot.bin $(OUT)/aboot.lst $(OUT)/aboot.ift $(OUT)/usbboot
 
-mkheader: tools/mkheader.c
-	gcc -O2 -Wall -Itools -o mkheader tools/mkheader.c
+HOSTOBJ := $(OUT)/host-obj
+TARGETOBJ := $(OUT)/target-obj
 
-aboot.bin: aboot
-	$(OBJCOPY) --gap-fill=0xee -O binary aboot aboot.bin
+OBJS := $(addprefix $(TARGETOBJ)/,$(OBJS))
+DEPS += $(OBJS:%o=%d)
 
-aboot.ift: aboot.bin mkheader
-	./mkheader $(TEXT_BASE) `wc -c aboot.bin` > aboot.ift
-	cat aboot.bin >> aboot.ift
+MKDIR = if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
 
-aboot.lst: aboot
-	$(OBJDUMP) -D aboot > aboot.lst
+QUIET ?= @
 
-aboot: $(OBJS)
-	$(LD) -Bstatic -T aboot.lds -Ttext $(TEXT_BASE) $(OBJS) $(LIBS) -o aboot
+$(HOSTOBJ)/%.o: %.c
+	@$(MKDIR)
+	@echo compile $<
+	$(QUIET)$(CC) $(HOST_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+$(HOSTOBJ)/%.o: %.S
+	@$(MKDIR)
+	@echo assemble $<
+	$(QUIET)$(CC) $(HOST_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+$(TARGETOBJ)/%.o: %.c
+	@$(MKDIR)
+	@echo compile $<
+	$(QUIET)$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+$(TARGETOBJ)/%.o: %.S
+	@$(MKDIR)
+	@echo assemble $<
+	$(QUIET)$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+
+$(OUT)/usbboot: tools/usbboot.c tools/usb_linux.c
+	@echo build $@
+	$(QUIET)gcc $(HOST_CFLAGS) -Itools -o $@ tools/usbboot.c tools/usb_linux.c
+
+$(OUT)/mkheader: tools/mkheader.c
+	@echo build $@
+	$(QUIET)gcc $(HOST_CFLAGS) -Itools -o $@ tools/mkheader.c
+
+$(OUT)/aboot.bin: $(OUT)/aboot
+	@echo create $@
+	$(QUIET)$(TARGET_OBJCOPY) --gap-fill=0xee -O binary $(OUT)/aboot $@
+
+$(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
+	@echo generate $@
+	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` > $@
+	@cat $(OUT)/aboot.bin >> $@
+
+$(OUT)/aboot.lst: $(OUT)/aboot
+	@echo create $@
+	$(QUIET)$(TARGET_OBJDUMP) -D $(OUT)/aboot > $@
+
+$(OUT)/aboot: $(OBJS)
+	@echo link $@
+	$(QUIET)$(TARGET_LD) -Bstatic -T aboot.lds -Ttext $(TEXT_BASE) $(OBJS) $(LIBS) -o $@
 
 clean::
-	rm -f aboot aboot.bin aboot.ift aboot.lst mkheader usbboot
-	rm -f arch/omap4/*.o arch/omap4/*~
-	rm -f libc/*.o libc/*~
-	rm -f *.o *~
+	@echo clean
+	@rm -rf $(OUT)
 
-.S.o:
-	$(CC) $(CFLAGS) -o $@ -c $<
+# we generate .d as a side-effect of compiling. override generic rule:
+%.d:
+-include $(DEPS)
