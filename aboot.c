@@ -36,7 +36,7 @@ static unsigned MSG = 0xaabbccdd;
 
 struct usb usb;
 
-#define DOWNLOAD_ADDR 0x82000000
+#define DOWNLOAD_ADDR 0x80E80000
 
 void aboot(void)
 {
