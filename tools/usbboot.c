@@ -115,33 +115,40 @@ fail:
 	return 0;
 }
 
+extern void _binary_out_aboot_bin_start;
+extern void _binary_out_aboot_bin_end;
+
 int main(int argc, char **argv)
 {
 	void *data, *data2;
 	unsigned sz, sz2;
 	usb_handle *usb;
 	int once = 1;
-	
+
+	fprintf(stderr,"?\n");
 	if (argc < 2) {
-		fprintf(stderr,"usage: usbboot <2ndstage> [ <image> ]\n");
+		fprintf(stderr,"usage: usbboot [ <2ndstage> ] <image>\n");
 		return 0;
 	}
 
-	data = load_file(argv[1], &sz);
-	if (data == 0) {
-		fprintf(stderr,"cannot load '%s'\n", argv[1]);
-		return -1;
-	}
-	
-	if (argc > 2) {
-		data2 = load_file(argv[2], &sz2);
-		if (data2 == 0) {
-			fprintf(stderr,"cannot load '%s'\n", argv[2]);
+	if (argc < 3) {
+		fprintf(stderr,"using built-in 2ndstage.bin\n");
+		data = &_binary_out_aboot_bin_start;
+		sz = &_binary_out_aboot_bin_end - &_binary_out_aboot_bin_start;
+	} else {
+		data = load_file(argv[1], &sz);
+		if (data == 0) {
+			fprintf(stderr,"cannot load '%s'\n", argv[1]);
 			return -1;
 		}
-	} else {
-		data2 = 0;
-		sz2 = 0;
+		argc--;
+		argv++;
+	}
+	
+	data2 = load_file(argv[1], &sz2);
+	if (data2 == 0) {
+		fprintf(stderr,"cannot load '%s'\n", argv[1]);
+		return -1;
 	}
 
 	for (;;) {
