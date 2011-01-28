@@ -142,7 +142,7 @@ void sdelay(unsigned long loops)
 	MV(CP(ABE_CLKS) , (PTD | IEN | OFF_EN | OFF_PD | OFF_IN | M0))  /* abe_clks */ \
 	MV(CP(ABE_DMIC_CLK1) , (M0))  /* abe_dmic_clk1 */ \
 	MV(CP(ABE_DMIC_DIN1) , (IEN | M0))  /* abe_dmic_din1 */ \
-	MV(CP(ABE_DMIC_DIN2) , (IEN | M0))  /* abe_dmic_din2 */ \
+	MV(CP(ABE_DMIC_DIN2),   (PTU | IEN | M3)) \
 	MV(CP(ABE_DMIC_DIN3) , (IEN | M0))  /* abe_dmic_din3 */ \
 	MV(CP(UART2_CTS) , (PTU | IEN | M0))  /* uart2_cts */ \
 	MV(CP(UART2_RTS) , (M0))  /* uart2_rts */ \
