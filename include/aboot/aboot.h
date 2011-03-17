@@ -33,7 +33,7 @@
 #include <stdarg.h>
 
 void serial_init(void);
-void serial_putc(const char c);
+void serial_putc(char c);
 void serial_puts(const char *s);
 
 int printf(const char *fmt, ...);

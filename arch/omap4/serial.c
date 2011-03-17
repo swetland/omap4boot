@@ -73,7 +73,7 @@ static inline void _serial_putc(char c)
 	WR(c, THR);
 }
 
-void serial_putc(const char c)
+void serial_putc(char c)
 {
     if (c == '\n')
         _serial_putc('\r');
@@ -83,6 +83,6 @@ void serial_putc(const char c)
 void serial_puts(const char *s)
 {
     while (*s)
-        _serial_putc(*s++);
+        serial_putc(*s++);
 }
 
