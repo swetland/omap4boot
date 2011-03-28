@@ -91,7 +91,7 @@ $(TARGETOBJ)/%.o: %.S
 
 $(OUT)/2ndstage.o: $(OUT)/mkheader $(OUT)/aboot.bin
 	@echo generate $@
-	objcopy --input binary --output `objdump -f $(OUT)/mkheader | grep "file format" | sed 's/.*format //g'` --binary-architecture `objdump -f $(OUT)/mkheader | grep "architecture" | sed 's/architecture: //g' | sed 's/,.*//g'` $(OUT)/aboot.bin $(OUT)/2ndstage.o
+	objcopy --input-target binary --output-target `objdump -f $(OUT)/mkheader | grep "file format" | sed 's/.*format //g'` --binary-architecture `objdump -f $(OUT)/mkheader | grep "architecture" | sed 's/architecture: //g' | sed 's/,.*//g'` $(OUT)/aboot.bin $(OUT)/2ndstage.o
 
 $(OUT)/usbboot: tools/usbboot.c tools/usb_linux.c $(OUT)/2ndstage.o
 	@echo build $@
