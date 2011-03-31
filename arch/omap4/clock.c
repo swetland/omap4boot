@@ -59,6 +59,8 @@
 /* clk sel is 12M / 13M / 16.8M / 19.2M / 26M / 27M / 38.4M */
 /* we only support 38.4M here */
 
+#define CONFIG_MPU_1000 1
+
 struct dpll_param mpu_dpll_param = {
 #ifdef CONFIG_MPU_600
 	0x7d, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
