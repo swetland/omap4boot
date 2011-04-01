@@ -40,6 +40,7 @@ struct rom_handle {
 	volatile u32 status;
 	u16 hs_toc_mask;
 	u16 gp_toc_mask;
+	u32 config_timeout;
 };
 
 struct usb {
