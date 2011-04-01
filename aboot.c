@@ -55,6 +55,8 @@ void aboot(void)
 	serial_init();
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
 
+	enable_irqs();
+
 	if (usb_open(&usb))
 		goto fail;
 

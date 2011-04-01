@@ -27,3 +27,7 @@ copy:
 size:
 		.word __bss_end - _start
 
+.global enable_irqs
+enable_irqs:
+	cpsie I
+	bx lr
