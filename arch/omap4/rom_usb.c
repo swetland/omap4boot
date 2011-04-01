@@ -95,12 +95,24 @@ int usb_open(struct usb *usb)
 	return 0;
 }
 
+
+struct usb *local_read_usb;
+static void rom_read_callback(struct rom_handle *rh)
+{
+
+	local_read_usb->dread.status = rh->status;
+	return;
+}
+
 void usb_queue_read(struct usb *usb, void *data, unsigned len)
 {
 	int n;
 	usb->dread.data = data;
 	usb->dread.length = len;
 	usb->dread.status = -1;
+	usb->dread.xfer_mode = 1;
+	usb->dread.callback = rom_read_callback;
+	local_read_usb = usb;
 	n = usb->io->read(&usb->dread);
 	if (n)
 		usb->dread.status = n;
@@ -117,12 +129,22 @@ int usb_wait_read(struct usb *usb)
 	}
 }
 
+struct usb *local_write_usb;
+void rom_write_callback(struct rom_handle *rh)
+{
+	local_write_usb->dwrite.status = rh->status;
+	return;
+}
+
 void usb_queue_write(struct usb *usb, void *data, unsigned len)
 {
 	int n;
 	usb->dwrite.data = data;
 	usb->dwrite.length = len;
 	usb->dwrite.status = -1;
+	usb->dwrite.xfer_mode = 1;
+	usb->dwrite.callback = rom_write_callback;
+	local_write_usb = usb;
 	n = usb->io->write(&usb->dwrite);
 	if (n)
 		usb->dwrite.status = n;
