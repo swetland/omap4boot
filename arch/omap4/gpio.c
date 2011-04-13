@@ -26,18 +26,34 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _IO_H_
-#define _IO_H_
+#include <aboot/io.h>
 
-#define readb(a)		(*((volatile unsigned char *) (a)))
-#define writeb(v, a)	(*((volatile unsigned char *) (a)) = (v))
+static unsigned gpio_base[6] = {
+	0x4A310000,
+	0x48055000,
+	0x4b057000,
+	0x4b059000,
+	0x4b05B000,
+	0x4b05D000
+};
 
-#define readw(a)		(*((volatile unsigned short *) (a)))
-#define writew(v, a)	(*((volatile unsigned short *) (a)) = (v))
+#define GPIO_CTRL    0x130
+#define GPIO_OE      0x134
+#define GPIO_DATAOUT 0x13C
+#define GPIO_CLEAR   0x190
+#define GPIO_SET     0x194
 
-#define readl(a)		(*((volatile unsigned int *) (a)))
-#define writel(v, a)	(*((volatile unsigned int *) (a)) = (v))
+void gpio_write(unsigned gpio, unsigned set)
+{
+	unsigned base = gpio_base[ gpio / 32 ];
+    unsigned bit = 1 << (gpio % 32);
 
-void gpio_write(unsigned gpio, unsigned set);
+        /* ensure that this GPIO bank is enabled */
+	writel(1, base + GPIO_CTRL);
 
-#endif
+        /* enable output for this gpio */
+    writel(readl(base + GPIO_OE) | bit, base + GPIO_OE);
+
+        /* set or clear the bit */
+    writel(bit, base + (set ? GPIO_SET : GPIO_CLEAR));
+}
