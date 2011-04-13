@@ -52,7 +52,20 @@ int usb_boot(usb_handle *usb,
 	     void *data2, unsigned sz2)
 {
 	uint32_t msg_boot = 0xF0030002;
+    uint32_t msg_getid = 0xF0030003;
 	uint32_t msg_size = sz;
+    uint8_t id[81];
+    int i;
+
+#if 0
+    memset(data, 0xee, 81);
+    fprintf(stderr,"reading ASIC ID\n");
+    usb_write(usb, &msg_getid, sizeof(msg_getid));
+    usb_read(usb, id, sizeof(id));
+    for (i = 0; i < sizeof(id); i++)
+        fprintf(stderr," %02x", id[i]);
+    fprintf(stderr,"\n");
+#endif
 
 	fprintf(stderr,"sending 2ndstage to target...\n");
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
