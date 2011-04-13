@@ -27,7 +27,8 @@
 
 -include local.mk
 
-TEXT_BASE ?= 0x40300000
+#TEXT_BASE ?= 0x40300000
+TEXT_BASE ?= 0x40308000
 
 TOOLCHAIN ?= arm-eabi-
 
@@ -49,6 +50,7 @@ OBJS +=	arch/omap4/serial.o
 OBJS += arch/omap4/clock.o
 OBJS += arch/omap4/sdram.o
 OBJS += arch/omap4/gpmc.o
+OBJS += arch/omap4/gpio.o
 OBJS += arch/omap4/rom_usb.o
 OBJS += libc/printf.o 
 OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
