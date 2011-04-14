@@ -47,14 +47,14 @@
 #define OFF_SCR		0x1C
 #define OFF_MDR1	0x20
 
-#define WR(val, addr) writeb(val, base + OFF_##addr)
-#define RD(addr) readb(base + OFF_##addr)
+#define WR(val, addr) writeb(val, cfg_uart_base + OFF_##addr)
+#define RD(addr) readb(cfg_uart_base + OFF_##addr)
 
-static unsigned base = CONFIG_SERIAL_BASE;
+unsigned cfg_uart_base = CONFIG_SERIAL_BASE;
 
 void serial_init(void)
 {
-    unsigned divisor = CONFIG_SERIAL_CLK_HZ / 16 / CONFIG_BAUDRATE;
+	unsigned divisor = CONFIG_SERIAL_CLK_HZ / 16 / CONFIG_BAUDRATE;
 
 	WR(0x00, IER);
 	WR(0x07, MDR1); /* reset */
@@ -75,14 +75,14 @@ static inline void _serial_putc(char c)
 
 void serial_putc(char c)
 {
-    if (c == '\n')
-        _serial_putc('\r');
-    _serial_putc(c);
+	if (c == '\n')
+		_serial_putc('\r');
+	_serial_putc(c);
 }
 
 void serial_puts(const char *s)
 {
-    while (*s)
-        serial_putc(*s++);
+	while (*s)
+		serial_putc(*s++);
 }
 

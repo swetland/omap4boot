@@ -57,4 +57,5 @@ void sdelay(unsigned long loops);
 
 /* global configuration, changable by board file */
 extern unsigned cfg_machine_type;
+extern unsigned cfg_uart_base;
 #endif
