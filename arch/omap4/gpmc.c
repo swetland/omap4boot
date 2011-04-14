@@ -31,8 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aboot/types.h>
-//#include <aboot/io.h>
+#include <aboot/aboot.h>
 #include <omap4/hw.h>
 
 

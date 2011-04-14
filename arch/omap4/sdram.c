@@ -229,11 +229,9 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
  * EMIF1 -- CS0 -- DDR1 (256 MB)
  * EMIF2 -- CS0 -- DDR2 (256 MB)
  *****************************************/
-void do_ddr_init(const struct ddr_regs *emif1_ddr_regs,
-		 const struct ddr_regs *emif2_ddr_regs)
+void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
+		    const struct ddr_regs *emif2_ddr_regs)
 {
-	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
-	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
@@ -290,29 +288,4 @@ void do_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 
 	writel(0x0, 0x80000000);
 	writel(0x0, 0x80000080);
-}
-
-const struct ddr_regs ddr_regs_elpida2G_400mhz_2cs = {
-	/* tRRD changed from 10ns to 12.5ns because of the tFAW requirement*/
-	.tim1		= 0x10eb0662,
-	.tim2		= 0x20370dd2,
-	.tim3		= 0x00b1c33f,
-	.phy_ctrl_1	= 0x849FF408,
-	.ref_ctrl	= 0x00000618,
-	.config_init	= 0x80000eb9,
-	.config_final	= 0x80001ab9,
-	.zq_config	= 0xD00b3215,
-	.mr1		= 0x83,
-	.mr2		= 0x4
-};
-
-void ddr_init(void)
-{
-	const struct ddr_regs *ddr_regs = &ddr_regs_elpida2G_400mhz_2cs;
-
-	/* 1GB, 128B interleaved */
-	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
-
-	do_ddr_init(ddr_regs, ddr_regs);
-
 }

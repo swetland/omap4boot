@@ -36,6 +36,9 @@ void serial_init(void);
 void serial_putc(char c);
 void serial_puts(const char *s);
 
+void board_mux_init(void);
+void board_ddr_init(void);
+
 int printf(const char *fmt, ...);
 int snprintf(char *str, size_t len, const char *fmt, ...);
 int vsprintf(char *str, const char *fmt, va_list ap);
@@ -43,5 +46,13 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list ap);
 
 int strlen(const char *s);
 void memset(void *p, unsigned char c, unsigned len);
+
+void enable_irqs(void);
+void disable_irqs(void);
+
+/* funky TI-style stuff */
+void sr32(u32 addr, u32 start_bit, u32 num_bits, u32 value);
+u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound);
+void sdelay(unsigned long loops);
 
 #endif

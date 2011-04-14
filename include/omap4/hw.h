@@ -587,6 +587,9 @@ struct dpll_param {
 	unsigned int m6;
 	unsigned int m7;
 };
+
+void omap4_ddr_init(const struct ddr_regs *ddr1,
+		    const struct ddr_regs *ddr2);
 #endif
 
 #endif

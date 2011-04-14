@@ -43,13 +43,13 @@ void aboot(void)
 	unsigned n;
 	unsigned len;
 
-	mux_config();
+	board_mux_init();
 	sdelay(100);
 
 	scale_vcores();
 
 	prcm_init();
-  	ddr_init();
+	board_ddr_init();
 	gpmc_init();
 
 	serial_init();

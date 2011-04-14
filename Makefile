@@ -32,6 +32,8 @@ TEXT_BASE ?= 0x40308000
 
 TOOLCHAIN ?= arm-eabi-
 
+BOARD ?= panda
+
 TARGET_CC := $(TOOLCHAIN)gcc
 TARGET_LD := $(TOOLCHAIN)ld
 TARGET_OBJCOPY := $(TOOLCHAIN)objcopy
@@ -52,6 +54,7 @@ OBJS += arch/omap4/sdram.o
 OBJS += arch/omap4/gpmc.o
 OBJS += arch/omap4/gpio.o
 OBJS += arch/omap4/rom_usb.o
+OBJS += board_$(BOARD).o
 OBJS += libc/printf.o 
 OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
 OBJS += libc/raise.o
