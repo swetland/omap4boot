@@ -38,6 +38,8 @@ struct usb usb;
 
 #define DOWNLOAD_ADDR 0x80E80000
 
+unsigned cfg_machine_type = 2791;
+
 void aboot(void)
 {
 	unsigned n;
@@ -72,10 +74,10 @@ void aboot(void)
 	usb_close(&usb);
 	serial_puts("booting....\n");
 
-    disable_irqs();
+	disable_irqs();
 	{
 		void (*entry)(unsigned, unsigned, unsigned) = (void*) DOWNLOAD_ADDR;
-		entry(0, 2791, 0x80000100);
+		entry(0, cfg_machine_type, 0x80000100);
 		for (;;);
 	}
 
