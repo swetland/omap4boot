@@ -31,10 +31,10 @@
 static unsigned gpio_base[6] = {
 	0x4A310000,
 	0x48055000,
-	0x4b057000,
-	0x4b059000,
-	0x4b05B000,
-	0x4b05D000
+	0x48057000,
+	0x48059000,
+	0x4805B000,
+	0x4805D000
 };
 
 #define GPIO_CTRL    0x130
@@ -49,10 +49,10 @@ void gpio_write(unsigned gpio, unsigned set)
     unsigned bit = 1 << (gpio % 32);
 
         /* ensure that this GPIO bank is enabled */
-	writel(1, base + GPIO_CTRL);
+	writel(0, base + GPIO_CTRL);
 
         /* enable output for this gpio */
-    writel(readl(base + GPIO_OE) | bit, base + GPIO_OE);
+    writel(readl(base + GPIO_OE) & (~bit), base + GPIO_OE);
 
         /* set or clear the bit */
     writel(bit, base + (set ? GPIO_SET : GPIO_CLEAR));
