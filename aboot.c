@@ -54,6 +54,8 @@ void aboot(void)
 	board_ddr_init();
 	gpmc_init();
 
+	board_late_init();
+
 	serial_init();
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
 

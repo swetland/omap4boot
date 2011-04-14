@@ -4,6 +4,10 @@
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 
+void board_late_init(void)
+{
+}
+
 void board_mux_init(void)
 {
 	MV(CP(GPMC_AD0) , (PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1));  /* sdmmc2_dat0 */
