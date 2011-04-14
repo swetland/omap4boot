@@ -28,6 +28,12 @@ size:
 		.word __bss_end - _start
 
 .global enable_irqs
+.global disable_irqs
+
 enable_irqs:
 	cpsie I
+	bx lr
+
+disable_irqs:
+	cpsid I
 	bx lr

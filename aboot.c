@@ -72,6 +72,7 @@ void aboot(void)
 	usb_close(&usb);
 	serial_puts("booting....\n");
 
+    disable_irqs();
 	{
 		void (*entry)(unsigned, unsigned, unsigned) = (void*) DOWNLOAD_ADDR;
 		entry(0, 2791, 0x80000100);
