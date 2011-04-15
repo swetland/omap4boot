@@ -31,12 +31,11 @@
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 #include <omap4/rom_usb.h>
+#include <config.h>
 
 static unsigned MSG = 0xaabbccdd;
 
 struct usb usb;
-
-#define DOWNLOAD_ADDR 0x80E80000
 
 unsigned cfg_machine_type = 2791;
 
@@ -44,6 +43,7 @@ void aboot(void)
 {
 	unsigned n;
 	unsigned len;
+	unsigned char *x = (void *) CONFIG_ADDR_DOWNLOAD;
 
 	board_mux_init();
 	sdelay(100);
@@ -70,18 +70,16 @@ void aboot(void)
 	if (n)
 		goto fail;
 
-	if (usb_read(&usb, (void*) DOWNLOAD_ADDR, len))
+	if (usb_read(&usb, (void*) CONFIG_ADDR_DOWNLOAD, len))
 		goto fail;
 
 	usb_close(&usb);
-	serial_puts("booting....\n");
 
 	disable_irqs();
-	{
-		void (*entry)(unsigned, unsigned, unsigned) = (void*) DOWNLOAD_ADDR;
-		entry(0, cfg_machine_type, 0x80000100);
-		for (;;);
-	}
+
+	boot_image(cfg_machine_type, CONFIG_ADDR_DOWNLOAD, len);
+	serial_puts("invalid image\n");
+	for (;;) ;
 
 fail:
 	serial_puts("io error\n");

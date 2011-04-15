@@ -59,6 +59,7 @@ OBJS += libc/printf.o
 OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
 OBJS += libc/raise.o
 OBJS += aboot.o 
+OBJS += boot.o
 OBJS += misc.o
 
 LIBS := $(LIBGCC)
