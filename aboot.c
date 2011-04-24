@@ -30,7 +30,7 @@
 #include <aboot/io.h>
 #include <omap4/mux.h>
 #include <omap4/hw.h>
-#include <omap4/rom_usb.h>
+#include <omap4/omap4_rom.h>
 #include <config.h>
 
 static unsigned MSG = 0xaabbccdd;
@@ -39,44 +39,17 @@ struct usb usb;
 
 unsigned cfg_machine_type = 2791;
 
-#define API(n) ( (void*) (*((u32 *) (n))) )
-
-struct read_desc {
-	u32 sector_start;
-	u32 sector_count;
-	void *destination;
-};
-
-struct mem_device {
-	u32 initialized;
-	u8 device_type;
-	u8 trials_count;
-	u32 xip_device;
-	u16 search_size;
-	u32 base_address;
-	u16 hs_toc_mask;
-	u16 gp_toc_mask;
-	void *device_data;
-	u16 *boot_options;
-};
-
-struct mem_driver {
-	int (*init)(struct mem_device *md);
-	int (*read)(struct mem_device *md, struct read_desc *rd);
-	int (*configure)(struct mem_device *md, void *config);
-};
-
-int (*rom_get_mem_driver)(struct mem_driver **io, u32 type);
 
 int load_image(unsigned device, unsigned start, unsigned count, void *data)
 {
+	int (*rom_get_mem_driver)(struct mem_driver **io, u32 type);
 	struct mem_driver *io = 0;
 	struct mem_device local_md_device, *md = 0;
 	struct read_desc rd;
 	u16 options;
 	int z;
 
-	rom_get_mem_driver = API(0x28404);
+	rom_get_mem_driver = API(PUBLIC_GET_DRIVER_MEM);
 	z = rom_get_mem_driver(&io, device);
 	if (z)
 		return -1;

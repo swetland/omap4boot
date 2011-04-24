@@ -28,51 +28,22 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
-#include <omap4/rom_usb.h>
+#include <omap4/omap4_rom.h>
 
-#define DEVICE_NULL	0x40
-#define DEVICE_UART1	0x41
-#define DEVICE_UART2	0x42
-#define DEVICE_UART3	0x43
-#define DEVICE_UART4	0x44
-#define DEVICE_USB	0x45
-#define DEVICE_USBEXT	0x46
-
-#define XFER_MODE_CPU 0
-#define XFER_MODE_DMA 1
-
-#define STATUS_OKAY		0
-#define STATUS_FAILED		1
-#define STATUS_TIMEOUT		2
-#define STATUS_BAD_PARAM	3
-#define STATUS_WAITING		4
-#define STATUS_NO_MEMORY	5
-#define STATUS_INVALID_PTR	6
-
-struct rom_driver {
-	int (*init)(struct rom_handle *rh);
-	int (*read)(struct rom_handle *rh);
-	int (*write)(struct rom_handle *rh);
-	int (*close)(struct rom_handle *rh);
-	int (*config)(struct rom_handle *rh, void *x);
-};
-
-#define API(n) ( (void*) (*((u32 *) (n))) )
-
-int (*rom_get_driver)(struct rom_driver **io, u32 device_type);
-int (*rom_get_device)(struct rom_handle **rh);
 
 int usb_open(struct usb *usb)
 {
-	struct rom_handle *boot;
+	int (*rom_get_per_driver)(struct per_driver **io, u32 device_type);
+	int (*rom_get_per_device)(struct per_handle **rh);
+	struct per_handle *boot;
 	int n;
 
 	memset(usb, 0, sizeof(*usb));
 
-	rom_get_driver = API(0x28408);
-	rom_get_device = API(0x28484);
+	rom_get_per_driver = API(PUBLIC_GET_DRIVER_PER);
+	rom_get_per_device = API(PUBLIC_GET_DEVICE_PER);
 
-	n = rom_get_device(&boot);
+	n = rom_get_per_device(&boot);
 	if (n)
 		return n;
 
@@ -80,7 +51,7 @@ int usb_open(struct usb *usb)
 	    (boot->device_type != DEVICE_USBEXT))
 		return -1;
 
-	n = rom_get_driver(&usb->io, boot->device_type);
+	n = rom_get_per_driver(&usb->io, boot->device_type);
 	if (n)
 		return n;
 
@@ -97,7 +68,7 @@ int usb_open(struct usb *usb)
 
 
 struct usb *local_read_usb;
-static void rom_read_callback(struct rom_handle *rh)
+static void rom_read_callback(struct per_handle *rh)
 {
 
 	local_read_usb->dread.status = rh->status;
@@ -130,7 +101,7 @@ int usb_wait_read(struct usb *usb)
 }
 
 struct usb *local_write_usb;
-void rom_write_callback(struct rom_handle *rh)
+void rom_write_callback(struct per_handle *rh)
 {
 	local_write_usb->dwrite.status = rh->status;
 	return;
