@@ -29,8 +29,6 @@
 #include <aboot/aboot.h>
 #include <aboot/bootimg.h>
 
-#include <config.h>
-
 int boot_image(unsigned machtype, unsigned image, unsigned len)
 {
 	void (*entry)(unsigned, unsigned, unsigned);

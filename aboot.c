@@ -31,7 +31,6 @@
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 #include <omap4/omap4_rom.h>
-#include <config.h>
 
 static unsigned MSG = 0xaabbccdd;
 

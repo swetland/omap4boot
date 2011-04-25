@@ -128,8 +128,8 @@ fail:
 	return 0;
 }
 
-extern void _binary_out_aboot_bin_start;
-extern void _binary_out_aboot_bin_end;
+extern unsigned char aboot_data[];
+extern unsigned aboot_size;
 
 int main(int argc, char **argv)
 {
@@ -146,8 +146,8 @@ int main(int argc, char **argv)
 
 	if (argc < 3) {
 		fprintf(stderr,"using built-in 2ndstage.bin\n");
-		data = &_binary_out_aboot_bin_start;
-		sz = &_binary_out_aboot_bin_end - &_binary_out_aboot_bin_start;
+		data = aboot_data;
+		sz = aboot_size;
 	} else {
 		data = load_file(argv[1], &sz);
 		if (data == 0) {

@@ -41,13 +41,14 @@ TARGET_OBJDUMP := $(TOOLCHAIN)objdump
 TARGET_CFLAGS := -g -Os  -Wall
 TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
 TARGET_CFLAGS += -I. -Iinclude
+TARGET_CFLAGS += -include config_$(BOARD).h
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
 HOST_CFLAGS := -g -O2 -Wall
 HOST_CFLAGS += -Itools
 
-OUT := out
+OUT := out/$(BOARD)
 OUT_HOST_OBJ := $(OUT)/host-obj
 OUT_TARGET_OBJ := $(OUT)/target-obj
 
@@ -63,6 +64,10 @@ include build/host-executable.mk
 
 M_NAME := mkheader
 M_OBJS := tools/mkheader.o
+include build/host-executable.mk
+
+M_NAME := bin2c
+M_OBJS := tools/bin2c.o
 include build/host-executable.mk
 
 M_NAME := aboot
@@ -84,10 +89,13 @@ M_OBJS += misc.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
-#M_NAME := agent
-#M_BASE := 0x82000000
-#M_OBJS := agent.o
-#include build/target-executable.mk
+M_NAME := agent
+M_BASE := 0x82000000
+M_OBJS := arch/common/start.o
+M_OBJS += agent.o
+M_OBJS += arch/omap4/serial.o
+
+include build/target-executable.mk
 
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
@@ -95,9 +103,10 @@ $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@cat $(OUT)/aboot.bin >> $@
 ALL += $(OUT)/aboot.ift
 
-$(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/mkheader $(OUT)/aboot.bin
+$(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c
 	@echo generate $@
-	$(QUIET)objcopy --input binary --output `objdump -f $(OUT)/mkheader | grep "file format" | sed 's/.*format //g'` --binary-architecture `objdump -f $(OUT)/mkheader | grep "architecture" | sed 's/architecture: //g' | sed 's/,.*//g'` $(OUT)/aboot.bin $(OUT_HOST_OBJ)/2ndstage.o
+	$(QUIET)./$(OUT)/bin2c aboot < $(OUT)/aboot.bin > $(OUT)/2ndstage.c
+	gcc -c -o $@ $(OUT)/2ndstage.c
 
 clean::
 	@echo clean

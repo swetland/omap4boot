@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2011 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,62 +26,38 @@
  * SUCH DAMAGE.
  */
 
-/* omap44x0 serial driver */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
-#include <omap4/hw.h>
-
-#define OFF_RBR		0x00
-#define OFF_THR		0x00
-#define OFF_DLL		0x00
-#define OFF_IER		0x04
-#define OFF_DLM		0x04
-#define OFF_FCR		0x08
-#define OFF_IIR		0x08
-#define OFF_LCR		0x0C
-#define OFF_MCR		0x10
-#define OFF_LSR		0x14
-#define OFF_MSR		0x18
-#define OFF_SCR		0x1C
-#define OFF_MDR1	0x20
-
-#define WR(val, addr) writeb(val, cfg_uart_base + OFF_##addr)
-#define RD(addr) readb(cfg_uart_base + OFF_##addr)
-
-unsigned cfg_uart_base = CONFIG_SERIAL_BASE;
-
-void serial_init(void)
+int main(int argc, char **argv)
 {
-	unsigned divisor = CONFIG_SERIAL_CLK_HZ / 16 / CONFIG_BAUDRATE;
+	const char *name = "binary";
+	unsigned char data[16];
+	int i,r;
 
-	WR(0x00, IER);
-	WR(0x07, MDR1); /* reset */
-	WR(0x83, LCR);  /* 8N1 + banksel */
-	WR(divisor & 0xFF, DLL);
-	WR(divisor >> 8, DLM);
-	WR(0x03, LCR);  /* 8N1 */
-	WR(0x03, MCR);  /* DTR, RTS */
-	WR(0x07, FCR);  /* reset and enable FIFO */
-	WR(0x00, MDR1); /* run */
+	if (argc > 1)
+		name = argv[1];
+
+	printf("/* auto generated file */\n\n");
+	printf("unsigned char %s_data[] = {\n", name);
+	for (;;) {
+		r = read(0, data, sizeof(data));
+		if (r == 0)
+			break;
+		if (r < 0) {
+			if (errno == EINTR)
+				continue;
+			fprintf(stderr,"error: %s\n", strerror(errno));
+			return -1;
+		}
+		for (i = 0; i < r; i++)
+			printf("0x%02x,", data[i]);
+		printf("\n");
+	}
+	printf("};\n");
+	printf("unsigned %s_size = sizeof(%s_data);\n", name, name);
+	return 0;
 }
-
-static inline void _serial_putc(char c)
-{
-	while (!(RD(LSR) & 0x20)) ;
-	WR(c, THR);
-}
-
-void serial_putc(char c)
-{
-	if (c == '\n')
-		_serial_putc('\r');
-	_serial_putc(c);
-}
-
-void serial_puts(const char *s)
-{
-	while (*s)
-		serial_putc(*s++);
-}
-
