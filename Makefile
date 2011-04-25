@@ -25,10 +25,9 @@
 ## OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ## SUCH DAMAGE.
 
--include local.mk
+what_to_build:: all
 
-#TEXT_BASE ?= 0x40300000
-TEXT_BASE ?= 0x40308000
+-include local.mk
 
 TOOLCHAIN ?= arm-eabi-
 
@@ -43,90 +42,68 @@ TARGET_CFLAGS := -g -Os  -Wall
 TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
 TARGET_CFLAGS += -I. -Iinclude
 
+TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
+
 HOST_CFLAGS := -g -O2 -Wall
-
-LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
-
-OBJS := arch/omap4/start.o
-OBJS +=	arch/omap4/serial.o 
-OBJS += arch/omap4/clock.o
-OBJS += arch/omap4/sdram.o
-OBJS += arch/omap4/gpmc.o
-OBJS += arch/omap4/gpio.o
-OBJS += arch/omap4/rom_usb.o
-OBJS += board_$(BOARD).o
-OBJS += libc/printf.o 
-OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
-OBJS += libc/raise.o
-OBJS += aboot.o 
-OBJS += boot.o
-OBJS += misc.o
-
-LIBS := $(LIBGCC)
+HOST_CFLAGS += -Itools
 
 OUT := out
+OUT_HOST_OBJ := $(OUT)/host-obj
+OUT_TARGET_OBJ := $(OUT)/target-obj
 
-all: $(OUT)/aboot.bin $(OUT)/aboot.lst $(OUT)/aboot.ift $(OUT)/usbboot
+ALL :=
 
-HOSTOBJ := $(OUT)/host-obj
-TARGETOBJ := $(OUT)/target-obj
+include build/rules.mk
 
-OBJS := $(addprefix $(TARGETOBJ)/,$(OBJS))
-DEPS += $(OBJS:%o=%d)
+M_NAME := usbboot
+M_OBJS := tools/usbboot.o
+M_OBJS += tools/usb_linux.o
+M_OBJS += 2ndstage.o
+include build/host-executable.mk
 
-MKDIR = if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
+M_NAME := mkheader
+M_OBJS := tools/mkheader.o
+include build/host-executable.mk
 
-QUIET ?= @
+M_NAME := aboot
+M_BASE := 0x40308000
+M_OBJS := arch/omap4/start.o
+M_OBJS += arch/omap4/serial.o 
+M_OBJS += arch/omap4/clock.o
+M_OBJS += arch/omap4/sdram.o
+M_OBJS += arch/omap4/gpmc.o
+M_OBJS += arch/omap4/gpio.o
+M_OBJS += arch/omap4/rom_usb.o
+M_OBJS += board_$(BOARD).o
+M_OBJS += libc/printf.o 
+M_OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
+M_OBJS += libc/raise.o
+M_OBJS += aboot.o 
+M_OBJS += boot.o
+M_OBJS += misc.o
+M_LIBS := $(TARGET_LIBGCC)
+include build/target-executable.mk
 
-$(HOSTOBJ)/%.o: %.c
-	@$(MKDIR)
-	@echo compile $<
-	$(QUIET)$(CC) $(HOST_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
-$(HOSTOBJ)/%.o: %.S
-	@$(MKDIR)
-	@echo assemble $<
-	$(QUIET)$(CC) $(HOST_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
-$(TARGETOBJ)/%.o: %.c
-	@$(MKDIR)
-	@echo compile $<
-	$(QUIET)$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
-$(TARGETOBJ)/%.o: %.S
-	@$(MKDIR)
-	@echo assemble $<
-	$(QUIET)$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
-
-$(OUT)/2ndstage.o: $(OUT)/mkheader $(OUT)/aboot.bin
-	@echo generate $@
-	objcopy --input binary --output `objdump -f $(OUT)/mkheader | grep "file format" | sed 's/.*format //g'` --binary-architecture `objdump -f $(OUT)/mkheader | grep "architecture" | sed 's/architecture: //g' | sed 's/,.*//g'` $(OUT)/aboot.bin $(OUT)/2ndstage.o
-
-$(OUT)/usbboot: tools/usbboot.c tools/usb_linux.c $(OUT)/2ndstage.o
-	@echo build $@
-	$(QUIET)gcc $(HOST_CFLAGS) -Itools -o $@ tools/usbboot.c tools/usb_linux.c $(OUT)/2ndstage.o
-
-$(OUT)/mkheader: tools/mkheader.c
-	@echo build $@
-	$(QUIET)gcc $(HOST_CFLAGS) -Itools -o $@ tools/mkheader.c
-
-$(OUT)/aboot.bin: $(OUT)/aboot
-	@echo create $@
-	$(QUIET)$(TARGET_OBJCOPY) --gap-fill=0xee -O binary $(OUT)/aboot $@
+#M_NAME := agent
+#M_BASE := 0x82000000
+#M_OBJS := agent.o
+#include build/target-executable.mk
 
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
 	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` > $@
 	@cat $(OUT)/aboot.bin >> $@
+ALL += $(OUT)/aboot.ift
 
-$(OUT)/aboot.lst: $(OUT)/aboot
-	@echo create $@
-	$(QUIET)$(TARGET_OBJDUMP) -D $(OUT)/aboot > $@
-
-$(OUT)/aboot: $(OBJS)
-	@echo link $@
-	$(QUIET)$(TARGET_LD) -Bstatic -T aboot.lds -Ttext $(TEXT_BASE) $(OBJS) $(LIBS) -o $@
+$(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/mkheader $(OUT)/aboot.bin
+	@echo generate $@
+	$(QUIET)objcopy --input binary --output `objdump -f $(OUT)/mkheader | grep "file format" | sed 's/.*format //g'` --binary-architecture `objdump -f $(OUT)/mkheader | grep "architecture" | sed 's/architecture: //g' | sed 's/,.*//g'` $(OUT)/aboot.bin $(OUT_HOST_OBJ)/2ndstage.o
 
 clean::
 	@echo clean
 	@rm -rf $(OUT)
+
+all:: $(ALL)
 
 # we generate .d as a side-effect of compiling. override generic rule:
 %.d:
