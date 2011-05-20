@@ -58,4 +58,28 @@ void sdelay(unsigned long loops);
 /* global configuration, changable by board file */
 extern unsigned cfg_machine_type;
 extern unsigned cfg_uart_base;
+
+/* some extern functions */
+extern void scale_vcores(void);
+extern void prcm_init(void);
+extern void gpmc_init(void);
+extern void board_late_init(void);
+extern void prcm_init(void);
+extern int boot_image(unsigned machtype, unsigned image, unsigned len);
+extern void configure_core_dpll_no_lock(void);
+extern void lock_core_dpll_shadow(void);
+
+/* rev-id stuff */
+typedef enum {
+	OMAP_REV_INVALID,
+	OMAP_4430_ES1_DOT_0,
+	OMAP_4430_ES2_DOT_0,
+	OMAP_4430_ES2_DOT_1,
+	OMAP_4430_ES2_DOT_2,
+	OMAP_4430_ES2_DOT_3,
+	OMAP_4460_ES1_DOT_0
+}omap_rev;
+
+extern omap_rev get_omap_rev(void);
+
 #endif

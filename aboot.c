@@ -113,6 +113,7 @@ int load_from_usb(unsigned *_len)
 void aboot(unsigned *info)
 {
 	unsigned bootdevice, n, len;
+	char *rev_name;
 
 	board_mux_init();
 	sdelay(100);
@@ -127,6 +128,9 @@ void aboot(unsigned *info)
 
 	serial_init();
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
+
+	get_omap_rev(&rev_name);
+	printf("Running on: %s\n\n", rev_name);
 
 	if (info) {
 		bootdevice = info[2] & 0xFF;

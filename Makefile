@@ -78,6 +78,7 @@ M_OBJS += arch/omap4/clock.o
 M_OBJS += arch/omap4/sdram.o
 M_OBJS += arch/omap4/gpmc.o
 M_OBJS += arch/omap4/gpio.o
+M_OBJS += arch/omap4/id.o
 M_OBJS += arch/omap4/rom_usb.o
 M_OBJS += board_$(BOARD).o
 M_OBJS += libc/printf.o 
