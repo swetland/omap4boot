@@ -46,9 +46,15 @@ int load_image(unsigned device, unsigned start, unsigned count, void *data)
 	struct mem_device local_md_device, *md = 0;
 	struct read_desc rd;
 	u16 options;
+	u32 base;
 	int z;
 
-	rom_get_mem_driver = API(PUBLIC_GET_DRIVER_MEM);
+	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
+		base = PUBLIC_API_BASE_4460;
+	else
+		base = PUBLIC_API_BASE_4430;
+
+	rom_get_mem_driver = API(base + PUBLIC_GET_DRIVER_MEM_OFFSET);
 	z = rom_get_mem_driver(&io, device);
 	if (z)
 		return -1;
@@ -113,7 +119,6 @@ int load_from_usb(unsigned *_len)
 void aboot(unsigned *info)
 {
 	unsigned bootdevice, n, len;
-	char *rev_name;
 
 	board_mux_init();
 	sdelay(100);
@@ -128,9 +133,6 @@ void aboot(unsigned *info)
 
 	serial_init();
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
-
-	get_omap_rev(&rev_name);
-	printf("Running on: %s\n\n", rev_name);
 
 	if (info) {
 		bootdevice = info[2] & 0xFF;

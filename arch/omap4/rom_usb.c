@@ -37,11 +37,18 @@ int usb_open(struct usb *usb)
 	int (*rom_get_per_device)(struct per_handle **rh);
 	struct per_handle *boot;
 	int n;
+        u32 base;
 
 	memset(usb, 0, sizeof(*usb));
 
-	rom_get_per_driver = API(PUBLIC_GET_DRIVER_PER);
-	rom_get_per_device = API(PUBLIC_GET_DEVICE_PER);
+
+        if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
+                base = PUBLIC_API_BASE_4460;
+        else
+                base = PUBLIC_API_BASE_4430;
+
+	rom_get_per_driver = API(base + PUBLIC_GET_DRIVER_PER_OFFSET);
+	rom_get_per_device = API(base + PUBLIC_GET_DEVICE_PER_OFFSET);
 
 	n = rom_get_per_device(&boot);
 	if (n)
