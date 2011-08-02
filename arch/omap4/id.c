@@ -31,35 +31,46 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 
-#define CONTORL_ID_CODE (0x4A002204)
+#define CONTROL_ID_CODE 0x4A002204
 
-struct omap_id {
-	omap_rev    rev_num;
-	u32         rev_reg_val;
-};
-
-static struct omap_id  map[] = {
-        { OMAP_4430_ES1_DOT_0, 0x0B85202F },
-        { OMAP_4430_ES2_DOT_0, 0x1B85202F },
-        { OMAP_4430_ES2_DOT_1, 0x3B95C02F },
-        { OMAP_4430_ES2_DOT_2, 0x4B95C02F },
-        { OMAP_4430_ES2_DOT_3, 0x6B95C02F },
-        { OMAP_4460_ES1_DOT_0, 0x0B94E02F },
-        { OMAP_REV_INVALID,    0x00000000 },
-};
-
-omap_rev get_omap_rev(void)
+unsigned int cortex_a9_rev(void)
 {
-	u8 i;
-	u32 id_code;
+	unsigned int i;
+	/* turn off I/D-cache */
+	asm ("mrc p15, 0, %0, c0, c0, 0" : "=r" (i));
+	return i;
+}
 
-	id_code = readl(CONTORL_ID_CODE);
+int get_omap_rev(void)
+{
+	/*
+	 * For some of the ES2/ES1 boards ID_CODE is not reliable:
+	 * Also, ES1 and ES2 have different ARM revisions
+	 * So use ARM revision for identification
+	 */
+	unsigned int rev = cortex_a9_rev();
 
-	for (i = 0; map[i].rev_num != OMAP_REV_INVALID; i++) {
-		if (map[i].rev_reg_val == id_code) {
-			return map[i].rev_num;
-		}
+	switch (rev) {
+		case MIDR_CORTEX_A9_R0P1:
+			return OMAP4430_ES1_0;
+		case MIDR_CORTEX_A9_R1P2:
+			rev = readl(CONTROL_ID_CODE);
+			switch (rev) {
+				case OMAP4_CONTROL_ID_CODE_ES2_2:
+					return OMAP4430_ES2_2;
+				case OMAP4_CONTROL_ID_CODE_ES2_1:
+					return OMAP4430_ES2_1;
+				case OMAP4_CONTROL_ID_CODE_ES2_0:
+					return OMAP4430_ES2_0;
+				default:
+					return OMAP4430_ES2_0;
+			}
+		case MIDR_CORTEX_A9_R1P3:
+			return OMAP4430_ES2_3;
+		case MIDR_CORTEX_A9_R2P10:
+			return OMAP4460_ES1_0;
+		default:
+			return OMAP4430_SILICON_ID_INVALID;
 	}
 
-	return OMAP_REV_INVALID;
 }

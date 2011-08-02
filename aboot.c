@@ -49,7 +49,7 @@ int load_image(unsigned device, unsigned start, unsigned count, void *data)
 	u32 base;
 	int z;
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
+	if (get_omap_rev() >= OMAP4460_ES1_0)
 		base = PUBLIC_API_BASE_4460;
 	else
 		base = PUBLIC_API_BASE_4430;
