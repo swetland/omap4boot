@@ -239,7 +239,7 @@ void board_mux_init(void)
 	MV1(WK(PAD1_SYS_BOOT7),(IEN|M3)); /*gpio_wk10*/
 	MV1(WK(PAD1_FREF_CLK3_REQ),(M3)); /*gpio_wk30*/
 	MV1(WK(PAD1_FREF_CLK4_REQ),(M3)); /*gpio_wk7*/
-	MV1(WK(PAD0_FREF_CLK4_OUT), (M3)); /*gpio_wk8 */
+	MV1(WK(PAD0_FREF_CLK4_OUT),(M3)); /*gpio_wk8 */
 }
 
 

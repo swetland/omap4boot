@@ -48,7 +48,6 @@
 #define MR10_ADDR			10
 #define MR16_ADDR			16
 #define REF_EN				0x40000000
-
 /* defines for MR1 */
 #define MR1_BL4				2
 #define MR1_BL8				3
@@ -67,7 +66,8 @@
 #define MR1_NWR7			5
 #define MR1_NWR8			6
 
-#define MR1_VALUE (MR1_NWR3<<5) | (MR1_WC<<4) | (MR1_BT_SEQ<<3) | (MR1_BL8<<0)
+#define MR1_VALUE	(MR1_NWR3 << 5) | (MR1_WC << 4) | (MR1_BT_SEQ << 3)  \
+							| (MR1_BL8 << 0)
 
 /* defines for MR2 */
 #define MR2_RL3_WL1			1
@@ -87,11 +87,9 @@
  * trasnitions are working
  */
 #define FREQ_UPDATE_EMIF
-
 /* EMIF Needs to be configured@19.2 MHz and shadow registers
  * should be programmed for new OPP.
  */
-
 /* Elpida 2x2Gbit */
 #define SDRAM_CONFIG_INIT		0x80800EB1
 #define DDR_PHY_CTRL_1_INIT		0x849FFFF5
@@ -114,7 +112,8 @@ void reset_phy(unsigned int base)
  */
 static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 {
-	unsigned int reg_value;
+	unsigned int reg_value, rev;
+	rev = get_omap_rev();
 
 	/*
 	 * set SDRAM CONFIG register
@@ -158,7 +157,6 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 	writel(ddr_regs->tim3, base + EMIF_SDRAM_TIM_3);
 	writel(ddr_regs->tim3, base + EMIF_SDRAM_TIM_3_SHDW);
 
-	writel(ddr_regs->zq_config, base + EMIF_ZQ_CONFIG);
 	/*
 	 * EMIF_PWR_MGMT_CTRL
 	 */
@@ -187,7 +185,9 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 	writel(MR10_ZQINIT, base + EMIF_LPDDR2_MODE_REG_DATA);
 
 	/* wait for tZQINIT=1us  */
-	sdelay(10);
+	sdelay(2000); /* value for up to 2GHz MPU spin */
+
+	writel(ddr_regs->zq_config, base + EMIF_ZQ_CONFIG);
 
 	/* set MR1 register */
 	writel(MR1_ADDR, base + EMIF_LPDDR2_MODE_REG_CFG);
@@ -224,14 +224,62 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 
 }
 /*****************************************
- * Routine: ddr_init
+ * Routine: omap4_ddr_init
  * Description: Configure DDR
  * EMIF1 -- CS0 -- DDR1 (256 MB)
  * EMIF2 -- CS0 -- DDR2 (256 MB)
  *****************************************/
 void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
-		    const struct ddr_regs *emif2_ddr_regs)
+		 const struct ddr_regs *emif2_ddr_regs)
 {
+	unsigned int rev;
+	rev = get_omap_rev();
+
+	if (rev == OMAP4430_ES1_0)
+	{
+		/* Configure the Control Module DDRIO device */
+		writel(0x1c1c1c1c, 0x4A100638);
+		writel(0x1c1c1c1c, 0x4A10063c);
+		writel(0x1c1c1c1c, 0x4A100640);
+		writel(0x1c1c1c1c, 0x4A100648);
+		writel(0x1c1c1c1c, 0x4A10064c);
+		writel(0x1c1c1c1c, 0x4A100650);
+		/* LPDDR2IO set to NMOS PTV */
+		writel(0x00ffc000, 0x4A100704);
+	} else if (rev == OMAP4430_ES2_0) {
+		writel(0x9e9e9e9e, 0x4A100638);
+		writel(0x9e9e9e9e, 0x4A10063c);
+		writel(0x9e9e9e9e, 0x4A100640);
+		writel(0x9e9e9e9e, 0x4A100648);
+		writel(0x9e9e9e9e, 0x4A10064c);
+		writel(0x9e9e9e9e, 0x4A100650);
+		/* LPDDR2IO set to NMOS PTV */
+		writel(0x00ffc000, 0x4A100704);
+	} else if (rev >= OMAP4430_ES2_1) {
+		writel(0x7c7c7c7c, 0x4A100638);
+		writel(0x7c7c7c7c, 0x4A10063c);
+		writel(0x7c7c7c00, 0x4A100640);
+		writel(0x7c7c7c7c, 0x4A100648);
+		writel(0x7c7c7c7c, 0x4A10064c);
+		writel(0x7c7c7c00, 0x4A100650);
+		/*
+		 * Adjust Internal Vref controls to reduce leakage
+		 * for chip retention (Core OSWR)
+		 */
+		writel(0xa388bc03, 0x4A100644);
+		writel(0xa388bc03, 0x4A100654);
+		/* LPDDR2IO set to NMOS PTV */
+		/* To be updated according to Process */
+		/*writel(0x00ffc000, 0x4A100704); */
+	}
+
+	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
+	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
+
+	if (rev >= OMAP4460_ES1_0) {
+		writel(0x00000000, MA_BASE + DMM_LISA_MAP_2);
+		writel(0xFF020100, MA_BASE + DMM_LISA_MAP_3);
+	}
 
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
@@ -272,6 +320,26 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	/* No IDLE: BUG in SDC */
 	writel(0x80000000, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
 	writel(0x80000000, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
+
+	/* SYSTEM BUG:
+	 * In n a specific situation, the OCP interface between the DMM and
+	 * EMIF may hang.
+	 * 1. A TILER port is used to perform 2D burst writes of
+	 * 	 width 1 and height 8
+	 * 2. ELLAn port is used to perform reads
+	 * 3. All accesses are routed to the same EMIF controller
+	 *
+	 * Work around to avoid this issue REG_SYS_THRESH_MAX value should
+	 * be kept higher than default 0x7. As per recommondation 0x0A will
+	 * be used for better performance with REG_LL_THRESH_MAX = 0x00
+	 */
+	if (rev >= OMAP4460_ES1_0) {
+		writel(0x0A300000, EMIF1_BASE + EMIF_L3_CONFIG);
+		writel(0x0A300000, EMIF2_BASE + EMIF_L3_CONFIG);
+	} else {
+		writel(0x0A0000FF, EMIF1_BASE + EMIF_L3_CONFIG);
+		writel(0x0A0000FF, EMIF2_BASE + EMIF_L3_CONFIG);
+	}
 
 	/*
 	 * DMM : DMM_LISA_MAP_0(Section_0)
