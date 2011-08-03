@@ -30,8 +30,10 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+#include <omap4/hw.h>
 
-#define CONTROL_ID_CODE 0x4A002204
+#define get_bit_field(nr, start, mask)\
+	(((nr) & (mask)) >> (start))
 
 unsigned int cortex_a9_rev(void)
 {
@@ -73,4 +75,12 @@ int get_omap_rev(void)
 			return OMAP4430_SILICON_ID_INVALID;
 	}
 
+}
+
+u32 omap4_silicon_type(void)
+{
+	u32 si_type = readl(STD_FUSE_PROD_ID_1);
+	si_type = get_bit_field(si_type, PROD_ID_1_SILICON_TYPE_SHIFT,
+		PROD_ID_1_SILICON_TYPE_MASK);
+	return si_type;
 }

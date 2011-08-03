@@ -69,6 +69,15 @@
 /* TAP information  dont know for 3430*/
 #define OMAP44XX_TAP_BASE	(0x49000000) /*giving some junk for virtio */
 
+/* STD_FUSE_PROD_ID_1 */
+#define STD_FUSE_PROD_ID_1		(OMAP44XX_CTRL_GEN_BASE + 0x218)
+#define PROD_ID_1_SILICON_TYPE_SHIFT	16
+#define PROD_ID_1_SILICON_TYPE_MASK	(3 << 16)
+
+#define PROD_ID_1_SILICON_TYPE_LOW_PERF		0
+#define PROD_ID_1_SILICON_TYPE_STD_PERF		1
+#define PROD_ID_1_SILICON_TYPE_HIGH_PERF	2
+
 /* UART */
 #define OMAP44XX_UART1			(OMAP44XX_L4_PER+0x6a000)
 #define OMAP44XX_UART2			(OMAP44XX_L4_PER+0x6c000)
@@ -283,6 +292,7 @@
 #define CM_DIV_M5_DPLL_DDRPHY			0x4a00423c
 #define CM_DIV_M6_DPLL_DDRPHY			0x4a004240
 #define CM_SSC_DELTAMSTEP_DPLL_DDRPHY		0x4a004248
+#define CM_MPU_MPU_CLKCTRL			0x4a004320
 
 /* CM1.ABE register offsets */
 #define CM1_ABE_CLKSTCTRL		0x4a004500
@@ -470,6 +480,9 @@
 #define CM_DSS_DSS_CLKCTRL              0x4a009120
 #define CM_DSS_DEISS_CLKCTRL            0x4a009128
 
+/* PM.DSS */
+#define PM_DSS_PWRSTCTRL		0x4a307100
+
 /* CM2.SGX */
 #define CM_SGX_CLKSTCTRL                0x4a009200
 #define CM_SGX_SGX_CLKCTRL              0x4a009220
@@ -589,6 +602,7 @@ struct dpll_param {
 	unsigned int m5;
 	unsigned int m6;
 	unsigned int m7;
+	unsigned int sd_div;
 };
 
 void omap4_ddr_init(const struct ddr_regs *ddr1,

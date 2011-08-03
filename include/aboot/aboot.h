@@ -96,5 +96,6 @@ extern void lock_core_dpll_shadow(void);
 #define OMAP4460_ES1_0 10
 
 extern int get_omap_rev(void);
+extern u32 omap4_silicon_type(void);
 
 #endif
