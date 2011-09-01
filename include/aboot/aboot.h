@@ -77,7 +77,8 @@ typedef enum {
 	OMAP_4430_ES2_DOT_1,
 	OMAP_4430_ES2_DOT_2,
 	OMAP_4430_ES2_DOT_3,
-	OMAP_4460_ES1_DOT_0
+	OMAP_4460_ES1_DOT_0,
+	OMAP_4460_ES1_DOT_1,
 }omap_rev;
 
 extern omap_rev get_omap_rev(void);

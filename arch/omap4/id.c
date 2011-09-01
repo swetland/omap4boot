@@ -45,6 +45,7 @@ static struct omap_id  map[] = {
         { OMAP_4430_ES2_DOT_2, 0x4B95C02F },
         { OMAP_4430_ES2_DOT_3, 0x6B95C02F },
         { OMAP_4460_ES1_DOT_0, 0x0B94E02F },
+	{ OMAP_4460_ES1_DOT_1, 0x2B94E02F },
         { OMAP_REV_INVALID,    0x00000000 },
 };
 
