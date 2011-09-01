@@ -521,6 +521,8 @@
 #define EMIF1_BASE			0x4c000000
 #define EMIF2_BASE			0x4d000000
 #define DMM_BASE			0x4e000000
+#define MA_BASE				0x482AF000
+
 /* EMIF */
 #define EMIF_MOD_ID_REV			0x0000
 #define EMIF_STATUS			0x0004
