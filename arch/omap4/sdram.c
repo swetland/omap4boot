@@ -232,7 +232,6 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 		    const struct ddr_regs *emif2_ddr_regs)
 {
-
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
 	 * Configure the Core DPLL but don't lock it
@@ -273,6 +272,9 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	writel(0x80000000, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
 	writel(0x80000000, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
 
+	writel(0x0A300000, EMIF1_BASE + EMIF_L3_CONFIG);
+	writel(0x0A300000, EMIF2_BASE + EMIF_L3_CONFIG);
+
 	/*
 	 * DMM : DMM_LISA_MAP_0(Section_0)
 	 * [31:24] SYS_ADDR 		0x80
@@ -288,4 +290,5 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 
 	writel(0x0, 0x80000000);
 	writel(0x0, 0x80000080);
+
 }
