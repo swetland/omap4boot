@@ -37,7 +37,7 @@ void board_mux_init(void)
 }
 
 
-const struct ddr_regs ddr_cfg = {
+const struct ddr_regs ddr_cfg_old = {
 	.tim1		= 0x10eb065a,
 	.tim2		= 0x20370dd2,
 	.tim3		= 0x00b1c33f,
@@ -50,12 +50,46 @@ const struct ddr_regs ddr_cfg = {
 	.mr2		= 0x4
 };
 
+const struct ddr_regs ddr_cfg_new = {
+	.tim1		= 0x10eb07a2,
+	.tim2		= 0x20370dd2,
+	.tim3		= 0x00b1a33f,
+	.phy_ctrl_1	= 0x849FF418,
+	.ref_ctrl	= 0x00000618,
+	.config_init	= 0x80000eb2,
+	.config_final	= 0x80001ab2,
+	.zq_config	= 0x500b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
+
 
 void board_ddr_init(void)
 {
+#if 0
 	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
-	omap4_ddr_init(&ddr_cfg, &ddr_cfg);
+	omap4_ddr_init(&ddr_cfg_old, &ddr_cfg_old);
+#else
+	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
+	writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
+
+	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
+	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_3);
+	writel(0x00000000, MA_BASE + DMM_LISA_MAP_2);
+	writel(0xFF020100, MA_BASE + DMM_LISA_MAP_3);
+
+	writel(0x7c7c7c7c, 0x4A100638);
+	writel(0x7c7c7c7c, 0x4A10063c);
+	writel(0x7c7c7c00, 0x4A100640);
+	writel(0x7c7c7c7c, 0x4A100648);
+	writel(0x7c7c7c7c, 0x4A10064c);
+	writel(0x7c7c7c00, 0x4A100650);
+	writel(0xa388bc03, 0x4A100644);
+	writel(0xa388bc03, 0x4A100654);
+
+	omap4_ddr_init(&ddr_cfg_new, &ddr_cfg_new);
+#endif
 }
