@@ -52,22 +52,32 @@ int usb_boot(usb_handle *usb,
 	     void *data2, unsigned sz2)
 {
 	uint32_t msg_boot = 0xF0030002;
-    uint32_t msg_getid = 0xF0030003;
+	uint32_t msg_getid = 0xF0030003;
 	uint32_t msg_size = sz;
-    uint8_t id[81];
-    int i;
+	uint8_t id[81];
+	int i;
 
-#if 0
-    memset(data, 0xee, 81);
-    fprintf(stderr,"reading ASIC ID\n");
-    usb_write(usb, &msg_getid, sizeof(msg_getid));
-    usb_read(usb, id, sizeof(id));
-    for (i = 0; i < sizeof(id); i++)
-        fprintf(stderr," %02x", id[i]);
-    fprintf(stderr,"\n");
-#endif
+#define OFF_CHIP	0x04
+#define OFF_ID		0x0F
+#define OFF_MPKH	0x26
+	memset(id, 0xee, 81);
+	fprintf(stderr,"reading ASIC ID\n");
+	usb_write(usb, &msg_getid, sizeof(msg_getid));
+	usb_read(usb, id, sizeof(id));
 
-	fprintf(stderr,"sending 2ndstage to target...\n");
+	fprintf(stderr,"CHIP: %02x%02x\n", id[OFF_CHIP+0], id[OFF_CHIP+1]);
+	fprintf(stderr,"IDEN: ");
+	for (i = 0; i < 20; i++)
+		fprintf(stderr,"%02x", id[OFF_ID+i]);
+	fprintf(stderr,"\nMPKH: ");
+	for (i = 0; i < 32; i++)
+		fprintf(stderr,"%02x", id[OFF_MPKH+i]);
+	fprintf(stderr,"\nCRC0: %02x%02x%02x%02x\n",
+		id[73], id[74], id[75], id[76]);
+	fprintf(stderr,"CRC1: %02x%02x%02x%02x\n",
+		id[77], id[78], id[79], id[80]);
+
+	fprintf(stderr,"sending 2ndstage to target... %08x\n",msg_boot);
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
 	usb_write(usb, &msg_size, sizeof(msg_size));
 	usb_write(usb, data, sz);
@@ -92,7 +102,7 @@ int match_omap4_bootloader(usb_ifc_info *ifc)
 {
 	if (ifc->dev_vendor != 0x0451)
 		return -1;
-	if (ifc->dev_product != 0xd00f)
+	if ((ifc->dev_product != 0xd010) && (ifc->dev_product != 0xd00f))
 		return -1;
 	return 0;
 }
@@ -138,7 +148,6 @@ int main(int argc, char **argv)
 	usb_handle *usb;
 	int once = 1;
 
-	fprintf(stderr,"?\n");
 	if (argc < 2) {
 		fprintf(stderr,"usage: usbboot [ <2ndstage> ] <image>\n");
 		return 0;
