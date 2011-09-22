@@ -71,7 +71,7 @@ M_OBJS := tools/bin2c.o
 include build/host-executable.mk
 
 M_NAME := aboot
-M_BASE := 0x40308000
+M_BASE := 0x40309000
 M_OBJS := arch/omap4/start.o
 M_OBJS += arch/omap4/serial.o 
 M_OBJS += arch/omap4/clock.o
@@ -85,6 +85,7 @@ M_OBJS += libc/printf.o
 M_OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
 M_OBJS += libc/raise.o
 M_OBJS += aboot.o 
+M_OBJS += trusted.o
 M_OBJS += boot.o
 M_OBJS += misc.o
 M_LIBS := $(TARGET_LIBGCC)

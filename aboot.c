@@ -32,13 +32,61 @@
 #include <omap4/hw.h>
 #include <omap4/omap4_rom.h>
 
+#define WITH_MEMORY_TEST	0
+#define WITH_FLASH_BOOT		0
+#define WITH_SIGNATURE_CHECK	1
+
+#if WITH_MEMORY_TEST
+void memtest(void *x, unsigned count) {
+	unsigned *w = x;
+	unsigned n;
+	count /= 4;
+
+	printf("memtest write - %d\n",count);
+	for (n = 0; n < count; n++) {
+		unsigned chk = 0xa5a5a5a5 ^ n;
+		w[n] = chk;
+	}
+	printf("memtest read\n");
+	for (n = 0; n < count; n++) {
+		unsigned chk = 0xa5a5a5a5 ^ n;
+		if (w[n] != chk) {
+			printf("ERROR @ %x (%x != %x)\n", 
+				(unsigned) (w+n), w[n], chk);
+			return;
+		}
+	}
+	printf("OK!\n");
+}
+#endif
+
 static unsigned MSG = 0xaabbccdd;
 
 struct usb usb;
 
 unsigned cfg_machine_type = 2791;
 
+#if WITH_SIGNATURE_CHECK
+unsigned call_trusted(unsigned appid, unsigned procid, unsigned flag, void *args);
 
+int verify(void *data, unsigned len, void *signature, unsigned rights) {
+	struct {
+		unsigned count;
+		void *data;
+		unsigned len;
+		void *signature;
+		unsigned rights;
+	} args;
+	args.count = 4;
+	args.data = data;
+	args.len = len;
+	args.signature = signature;
+	args.rights = rights;
+	return call_trusted(12, 0, 0, &args);
+}
+#endif
+
+#if WITH_FLASH_BOOT
 int load_image(unsigned device, unsigned start, unsigned count, void *data)
 {
 	int (*rom_get_mem_driver)(struct mem_driver **io, u32 type);
@@ -91,6 +139,7 @@ int load_from_mmc(unsigned device, unsigned *len)
 	*len = 256 * 1024;
 	return 0;
 }
+#endif
 
 int load_from_usb(unsigned *_len)
 {
@@ -124,16 +173,25 @@ void aboot(unsigned *info)
 	sdelay(100);
 
 	scale_vcores();
-
 	prcm_init();
 	board_ddr_init();
 	gpmc_init();
-
 	board_late_init();
 
 	serial_init();
+
 	serial_puts("\n[ aboot second-stage loader ]\n\n");
 
+	printf("MSV=%08x\n",*((unsigned*) 0x4A00213C));
+
+#if WITH_MEMORY_TEST
+	memtest(0x82000000, 8*1024*1024);
+	memtest(0xA0208000, 8*1024*1024);
+#endif
+
+#if !WITH_FLASH_BOOT
+	n = load_from_usb(&len);
+#else
 	if (info) {
 		bootdevice = info[2] & 0xFF;
 	} else {
@@ -154,12 +212,29 @@ void aboot(unsigned *info)
 		serial_puts("boot device: unknown\n");
 		for (;;) ;
 	}
+#endif
 
 	if (n) {
-		serial_puts("io error\n");
+		serial_puts("*** IO ERROR ***\n");
 	} else {
+#if WITH_SIGNATURE_CHECK
+		void *data = (void*) (CONFIG_ADDR_DOWNLOAD);
+		void *sign = (void*) (CONFIG_ADDR_DOWNLOAD + len - 280);
+		if ((len < 281) || (len > (32*1024*1024)))
+			goto fail_verify;
+		len -= 280;
+
+		n = verify(data, len, sign, 2);
+		if (n != 0) {
+		fail_verify:
+			serial_puts("*** SIGNATURE VERIFICATION FAILED ***\n");
+			for (;;) ;
+		}
+#endif
 		boot_image(cfg_machine_type, CONFIG_ADDR_DOWNLOAD, len);
-		serial_puts("invalid image\n");
+		serial_puts("*** BOOT FAILED ***\n");
 	}
+
+	for (;;) ;
 }
 
