@@ -287,8 +287,4 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 
 	reset_phy(EMIF1_BASE);
 	reset_phy(EMIF2_BASE);
-
-	writel(0x0, 0x80000000);
-	writel(0x0, 0x80000080);
-
 }
