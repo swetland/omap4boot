@@ -241,7 +241,7 @@ void board_mux_init(void)
 }
 
 
-const struct ddr_regs elpida2G_400mhz_2cs = {
+static struct ddr_regs elpida2G_400mhz_2cs = {
 	/* tRRD changed from 10ns to 12.5ns because of the tFAW requirement*/
 	.tim1		= 0x10eb0662,
 	.tim2		= 0x20370dd2,
@@ -255,7 +255,6 @@ const struct ddr_regs elpida2G_400mhz_2cs = {
 	.mr2		= 0x4
 };
 
-
 void board_ddr_init(void)
 {
 	/* 1GB, 128B interleaved */
@@ -263,6 +262,12 @@ void board_ddr_init(void)
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
+	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0) {
+		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
+		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
+	}
+
 	omap4_ddr_init(&elpida2G_400mhz_2cs,
 		       &elpida2G_400mhz_2cs);
+
 }
