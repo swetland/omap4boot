@@ -92,4 +92,6 @@ void board_ddr_init(void)
 
 	omap4_ddr_init(&ddr_cfg_new, &ddr_cfg_new);
 #endif
+	writel(0x0, 0x80000000);
+	writel(0x0, 0x80000080);
 }
