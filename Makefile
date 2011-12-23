@@ -33,6 +33,12 @@ TOOLCHAIN ?= arm-eabi-
 
 BOARD ?= panda
 
+SUPPORTED_HOST_OS := linux darwin
+HOST_OS := $(shell uname | tr [:upper:] [:lower:])
+ifneq ($(findstring $(HOST_OS),$(SUPPORTED_HOST_OS)),$(HOST_OS))
+$(error HOST_OS '$(HOST_OS)' is not supported)
+endif
+
 TARGET_CC := $(TOOLCHAIN)gcc
 TARGET_LD := $(TOOLCHAIN)ld
 TARGET_OBJCOPY := $(TOOLCHAIN)objcopy
@@ -45,8 +51,14 @@ TARGET_CFLAGS += -include config_$(BOARD).h
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
-HOST_CFLAGS := -g -O2 -Wall
+HOST_CFLAGS_linux := -g -O2 -Wall
+HOST_CFLAGS_darwin := $(HOST_CFLAGS_linux)
+HOST_CFLAGS := $(HOST_CFLAGS_$(HOST_OS))
 HOST_CFLAGS += -Itools
+
+HOST_LDLIBS_darwin := -framework CoreFoundation -framework IOKit \
+					  -framework Carbon
+HOST_LDLIBS := $(HOST_LDLIBS_$(HOST_OS))
 
 OUT := out/$(BOARD)
 OUT_HOST_OBJ := $(OUT)/host-obj
@@ -58,7 +70,7 @@ include build/rules.mk
 
 M_NAME := usbboot
 M_OBJS := tools/usbboot.o
-M_OBJS += tools/usb_linux.o
+M_OBJS += tools/usb_$(HOST_OS).o
 M_OBJS += 2ndstage.o
 include build/host-executable.mk
 
