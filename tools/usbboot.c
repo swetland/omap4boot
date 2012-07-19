@@ -83,6 +83,7 @@ int usb_boot(usb_handle *usb,
 	usb_write(usb, data, sz);
 
 	if (data2) {
+		usleep(2000000);
 		fprintf(stderr,"waiting for 2ndstage response...\n");
 		usb_read(usb, &msg_size, sizeof(msg_size));
 		if (msg_size != 0xaabbccdd) {
