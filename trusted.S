@@ -1,4 +1,5 @@
 .global call_trusted
+.arch_extension sec
 
 call_trusted:
 	stmfd sp!, {r4-r12,lr}
