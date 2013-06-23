@@ -37,7 +37,7 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 #include <omap4/hw.h>
-
+#include <aboot/misc.h>
 
 //#include <omap4/clocks.h>
 

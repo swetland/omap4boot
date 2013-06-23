@@ -33,7 +33,7 @@
 
 #include <aboot/aboot.h>
 #include <omap4/hw.h>
-
+#include <aboot/misc.h>
 
 /* must be called from sram or flash */
 void gpmc_init(void)
