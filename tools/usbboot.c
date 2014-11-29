@@ -47,6 +47,15 @@ typedef struct tocentry {
 
 #define USE_TOC 0
 
+int match_omap4_bootloader(usb_ifc_info *ifc)
+{
+	if (ifc->dev_vendor != 0x0451)
+		return -1;
+	if ((ifc->dev_product != 0xd010) && (ifc->dev_product != 0xd00f))
+		return -1;
+	return 0;
+}
+
 int usb_boot(usb_handle *usb,
 	     void *data, unsigned sz, 
 	     void *data2, unsigned sz2)
@@ -81,10 +90,20 @@ int usb_boot(usb_handle *usb,
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
 	usb_write(usb, &msg_size, sizeof(msg_size));
 	usb_write(usb, data, sz);
-
+	
+	
 	if (data2) {
+		// reopen the usb endpoint, to switch from talking
+		// to the 1st stage to talk to the 2nd stage 
+		usb_close(usb);
 		fprintf(stderr,"waiting for 2ndstage response...\n");
+		// sleeping for 2 seconds to let the 2nd stage prepare.
+		// if you reopen too quickly then things break, stochastically.
+		sleep(2);
+		usb = usb_open(match_omap4_bootloader);
 		usb_read(usb, &msg_size, sizeof(msg_size));
+		// 0xaabbccdd is not any sort of message size.
+		// msg_size was just a convenient piece of RAM available
 		if (msg_size != 0xaabbccdd) {
 			fprintf(stderr,"unexpected 2ndstage response\n");
 			return -1;
@@ -95,15 +114,6 @@ int usb_boot(usb_handle *usb,
 		usb_write(usb, data2, sz2);
 	}
 	
-	return 0;
-}
-
-int match_omap4_bootloader(usb_ifc_info *ifc)
-{
-	if (ifc->dev_vendor != 0x0451)
-		return -1;
-	if ((ifc->dev_product != 0xd010) && (ifc->dev_product != 0xd00f))
-		return -1;
 	return 0;
 }
 
