@@ -93,21 +93,23 @@ int usb_boot(usb_handle *usb,
 	
 	
 	if (data2) {
-		// reopen the usb endpoint, to switch from talking
-		// to the 1st stage to talk to the 2nd stage 
-		usb_close(usb);
 		fprintf(stderr,"waiting for 2ndstage response...\n");
-		// sleeping for 2 seconds to let the 2nd stage prepare.
-		// if you reopen too quickly then things break, stochastically.
-		sleep(2);
-		usb = usb_open(match_omap4_bootloader);
+		
+		// sleep lets the 2nd stage prepare itself.
+		// if speak to it too quickly it may or may not be ready, and if not it will cut you off.
+		sleep(5);
+		
+		// look for the 2nd stage's "I'm here!" banner
 		usb_read(usb, &msg_size, sizeof(msg_size));
-		// 0xaabbccdd is not any sort of message size.
-		// msg_size was just a convenient piece of RAM available
+		  // msg_size is just a convenient piece of RAM available
+		  // the value we read is not any sort of message size.
 		if (msg_size != 0xaabbccdd) {
-			fprintf(stderr,"unexpected 2ndstage response\n");
+			fprintf(stderr,"unexpected 2ndstage response 0x%08X\n", msg_size);
 			return -1;
 		}
+		
+		// since the 2nd stage looks ready to accept the 3rd,
+		// send it over:
 		msg_size = sz2;
 		fprintf(stderr,"sending image to target...\n");
 		usb_write(usb, &msg_size, sizeof(msg_size));
