@@ -29,7 +29,7 @@ what_to_build:: all
 
 -include local.mk
 
-TOOLCHAIN ?= arm-eabi-
+TOOLCHAIN ?= arm-none-eabi-
 
 BOARD ?= panda
 
