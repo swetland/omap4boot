@@ -7,6 +7,7 @@ call_trusted:
 	dsb
 	isb
 	dmb
+.arch_extension sec
 	smc 1
 	ldmfd sp!, {r4-r12,lr}
 	bx lr
