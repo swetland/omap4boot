@@ -45,8 +45,9 @@ TARGET_CFLAGS += -include config_$(BOARD).h
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
-HOST_CFLAGS := -g -O2 -Wall
+HOST_CFLAGS ?= -g -O2 -Wall 
 HOST_CFLAGS += -Itools
+
 
 OUT := out/$(BOARD)
 OUT_HOST_OBJ := $(OUT)/host-obj
@@ -108,7 +109,7 @@ ALL += $(OUT)/aboot.ift
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c
 	@echo generate $@
 	$(QUIET)./$(OUT)/bin2c aboot < $(OUT)/aboot.bin > $(OUT)/2ndstage.c
-	gcc -c -o $@ $(OUT)/2ndstage.c
+	gcc -c $(HOST_CFLAGS) -o $@ $(OUT)/2ndstage.c
 
 clean::
 	@echo clean
